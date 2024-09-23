@@ -1,0 +1,273 @@
+---
+title: "KI-RIKEN 2024 Assignment 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+library( "airway" )
+library("ggplot2")
+library("dplyr")
+library(tidyverse)
+library(tidybiology)
+```
+
+## Task4 - Using R example datasets
+
+**the CO2 data set** : Carbon Dioxide Uptake in Grass Plants data
+
+-   Plant: an ordered factor with levels giving a unique identifier for each plant\
+-   Type: a factor with levels giving the origin of the plant\
+-   Treatment:a factor with levels nonchilled chilled\
+-   conc: a numeric vector of ambient carbon dioxide concentrations(mL/L)\
+-   uptake:a numeric vector of carbon dioxide uptake rates$(\mu mol/m^{2} sec)$\
+
+```{r}
+data(CO2)
+
+# Quebec
+## average
+Q_ave <-mean(CO2$uptake[CO2$Type=='Quebec'])
+## median
+Q_med <- median(CO2$uptake[CO2$Type=='Quebec'])
+
+# Mississippi
+## average
+M_ave <- mean(CO2$uptake[CO2$Type=='Mississippi'])
+## median
+M_med <- median(CO2$uptake[CO2$Type=='Mississippi'])
+
+# output
+## Quebec
+cat("CO2 uptake of the plants from Quebec - average:", Q_ave, ", median:", Q_med, "\n")
+## Mississippi
+cat("CO2 uptake of the plants from Mississippi - average:", M_ave, ", median:", M_med, "\n")
+```
+
+**airway data set** : Read counts in genes for an RNA-Seq experiment on four human airway smooth muscle cell lines
+
+```{r}
+data('airway')
+#count data
+count_data<-assay(airway)
+
+#expressed_in_each_sample
+expressed_in_each_sample <- colSums(count_data >0)
+#not_expressed_in_any_sample
+expressed_in_any_sample <- rowSums(count_data>0)>0
+not_expressed_in_any_sample <- sum(!expressed_in_any_sample)
+
+## expressed_in_each_sample
+cat("The number of genes expressed in each sample:", "\n")
+cat(paste(names(expressed_in_each_sample), expressed_in_each_sample, sep=': ', collapse='\n'), "\n")
+## not_expressed_in_any_sample
+cat("The number of genes not expressed in any sample:", not_expressed_in_any_sample, "\n")
+```
+
+## Task5 - R Functions
+
+1.  A function that calculates the ratio of the mean and the median of a given vector
+
+```{r}
+calculates_ratio<-function(vec){
+  ## Calculate the mean of the vector
+  mean_val <- mean(vec, na.rm = TRUE)
+  ## Calculate the median of the vector
+  median_val <- median(vec, na.rm = TRUE)
+  ## Calculate the ratio of the mean and the median
+  ratio <- mean_val / median_val
+  
+  return(ratio)
+}
+#example
+dat<-c(3,4,5,1,2,6,7,8,9)
+calculates_ratio(dat)
+```
+
+2.  A function that ignores the lowest and the highest value from a given vector and calculate the mean
+
+```{r}
+calculate_mean<-function(vec){
+  #sort the vector to find the lowest and the highest value
+  sort_data<-sort(vec)
+  #Remove the lowest and highest value
+  trim_data<-sort_data[-c(1,length(vec))]
+  ##calculate the mean
+  mean_val <- mean(trim_data,na.rm = TRUE)
+  
+  return(mean_val)
+}
+#example
+dat<-c(3,4,5,1,2,6,7,8,9)
+calculate_mean(dat)
+```
+
+3.  **Piping**\
+    Pipes (%\>%) streamline code readability by allowing you to pass outputs from one function directly into the next. Use pipes for sequential operations, enhancing clarity. Avoid them when functions require multiple inputs, as it can obscure the logic or lead to confusion in complex operations.
+
+4.  **The apply-family of functions (apply, lapply, sapply etc.)**\
+    The apply family (e.g., apply, lapply, sapply) efficiently applies functions to elements of data structures. They’re useful for reducing loops, simplifying code, and handling lists or matrices, which can enhance performance and clarity when processing data in a functional programming style.
+
+    -   apply:\
+    -   lapply:\
+    -   sapply:\
+
+## Task6 - Basic visualization with R
+
+1.  Compare the distributions of the body heights of the two species from the'magic_guys.csv' dataset graphically 1-a
+
+```{r}
+data_csv<-read.csv("~/R/KI-RIKEN joint bioinformatics course 2024/data/magic_guys.csv")
+#histgram length each species
+plot_hist <- ggplot(data = data_csv,aes(x=length,fill = species))+
+  geom_histogram(position = "identity", alpha = 0.8,bins = 8)+theme_bw()
+plot(plot_hist)
+```
+
+1-b
+
+```{r}
+#box plot length each species
+plot_box <- ggplot(data = data_csv,aes(x=species,y=length,fill = species))+
+  geom_boxplot(alpha = 0.8)+theme_bw()+geom_jitter(size = 0.2)
+plot(plot_box)
+```
+
+1-c\
+- **png**:\
+- **pdf**:\
+- **svg**:\
+2. Load the gene expression data matrix from the ‘microarray_data.tab’ dataset provided in the shared folder, it is a big tabular separated matrix.
+
+```{r}
+# 2-a
+data_tab<-read.table("~/R/KI-RIKEN joint bioinformatics course 2024/data/microarray_data.tab",header =TRUE,sep = "\t",na.strings = "")
+cat("microarray data matrix:rows(The number of sample)",nrow(data_tab),",columns(The number of gene)",ncol(data_tab), "\n")
+# 2-b
+#missing values per gene
+missing_per_gene <- colSums(is.na(data_tab))
+data_missing<-data.frame(Gene = names(missing_per_gene),MissingCount=as.numeric(missing_per_gene),Ratio=as.numeric(missing_per_gene)/nrow(data_tab))
+
+#visualize
+##Missing Values per Gene
+plot_miss_bar<-ggplot(data = data_missing,aes(x=Gene,y=MissingCount))+
+  geom_bar(stat = "identity", fill = "skyblue")+theme_bw()+
+  theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())+
+  labs(title = "Missing Values per Gene", x = "Gene", y = "Number of Missing Values")
+print(plot_miss_bar)
+##Distribution of Missing Values per Gene
+plot_miss_hist<-ggplot(data = data_missing,aes(x=MissingCount))+geom_histogram(bins = 8)+
+  theme_bw()+
+  labs(title = "Distribution of Missing Values per Gene", x = "Number of Missing Values", y = "Frequency")
+plot(plot_miss_hist)
+
+# 2-c
+#Find the genes for which there are more than X% (X=10%, 20%, 50%) missing values.
+thresholds <- c(0.10, 0.20, 0.50)
+gene_thresholds<-lapply(thresholds,function(Ratio){
+  missing_gene<-data_missing$Gene[data_missing$Ratio > Ratio]
+  return(missing_gene)
+})
+names(gene_thresholds)<-paste(thresholds*100,"%",sep = "")
+#print(head(gene_thresholds))
+
+# 2-d
+##calculate the mean each gene
+mean_value<-sapply(data_tab,function(g){
+  if (all(is.na(g))){
+    return(NA)
+  }else{
+    return(mean(g,na.rm=TRUE))
+  }
+})
+data_mean_each_gene<-data.frame(Gene=names(mean_value),Mean=as.numeric(mean_value))
+##Replace the missing values by the average expression value
+data_replace_mean<-data_tab %>%
+  mutate(across(everything(),~ifelse(is.na(.),data_mean_each_gene$Mean[data_mean_each_gene$Gene == cur_column()],.)))
+```
+
+3.  Visualize the data in the CO2 dataset
+
+```{r}
+plot_CO2<-ggplot(CO2, aes(x = conc, y = uptake, color = Type)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    labs(title = "CO2 Uptake by CO2 Concentration", x = "CO2 Concentration (mL/L)", y = "CO2 Uptake (μmol/m²/s)") +
+    theme_minimal()
+plot(plot_CO2)
+```
+
+## Task7
+
+```{r}
+# Load the chromosome data
+data("chromosome")
+# 1-a
+## Extract summary statistics
+summary_stats <- chromosome %>%
+  summarize(
+    mean.variations = mean(variations, na.rm = TRUE),
+    median.variations = median(variations, na.rm = TRUE),
+    max.variations = max(variations, na.rm = TRUE),
+    
+    mean.protein_coding_genes = mean(protein_codinggenes, na.rm = TRUE),
+    median.protein_coding_genes = median(protein_codinggenes, na.rm = TRUE),
+    max.protein_coding_genes = max(protein_codinggenes, na.rm = TRUE),
+    
+    mean.miRNAs = mean(mi_rna, na.rm = TRUE),
+    median.miRNAs = median(mi_rna, na.rm = TRUE),
+    max.miRNAs = max(mi_rna, na.rm = TRUE)
+  ) %>%
+  pivot_longer(everything(),names_to = c("Statistic", ".value"), names_sep = "\\.") %>%
+  as.data.frame()
+print(summary_stats)
+# 1-b
+##the chromosome size distribute
+plot_chromosome_size<-ggplot(data = chromosome,aes(x=length_mm))+
+  geom_histogram(bins = 6,fill = "lightblue", color = "black")+labs(title = "Distribution of Chromosome Size", x = "Chromosome size(mm)", y = "Frequency") + theme_bw()
+plot(plot_chromosome_size)
+
+# 1-c
+##protein_coding_genes
+plot_pro_len <- ggplot(data=chromosome, aes(x = length_mm, y = protein_codinggenes))+
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", color = "darkblue") +
+  labs(title = "Protein Coding Genes and Chromosome Size", x = "CChromosome size(mm)", y = "Number of Protein Coding Genes") +
+  theme_bw()
+plot(plot_pro_len)
+##miRNA
+plot_mi_len<-ggplot(data=chromosome, aes(x = length_mm, y = mi_rna)) +
+  geom_point(color = "red") +
+  geom_smooth(method = "lm", color = "darkred") +
+  labs(title = "miRNAs and Chromosome Size", x = "Chromosome size(mm)", y = "Number of miRNAs") +
+  theme_bw()
+plot(plot_mi_len)
+```
+
+1-d
+
+```{r}
+# Load the proteins data
+data("proteins")
+# Extract summary statistics
+protein_summary <- proteins %>%
+  summarize(
+    mean_length = mean(length, na.rm = TRUE),
+    median_length = median(length, na.rm = TRUE),
+    max_length = max(length, na.rm = TRUE),
+    
+    mean_mass = mean(mass, na.rm = TRUE),
+    median_mass = median(mass, na.rm = TRUE),
+    max_mass = max(mass, na.rm = TRUE)
+  ) %>%
+  pivot_longer(everything(),names_to = c("Statistic", ".value"), names_sep = "_") %>%
+  as.data.frame()
+print(protein_summary)
+
+plot_len_mass<-ggplot(data=proteins, aes(x = log(length,base = 2), y =log(mass,base = 2))) +
+    geom_point(color = "green") +
+    geom_smooth(method = "lm", color = "darkgreen") +
+    labs(title = "length and mass", x = "length(log_2 scale)", y = "mass(log_2 scale)") +
+    theme_bw()
+plot(plot_len_mass)
+```
