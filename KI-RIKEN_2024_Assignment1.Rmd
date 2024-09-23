@@ -108,10 +108,6 @@ calculate_mean(dat)
 4.  **The apply-family of functions (apply, lapply, sapply etc.)**\
     The apply family (e.g., apply, lapply, sapply) efficiently applies functions to elements of data structures. They’re useful for reducing loops, simplifying code, and handling lists or matrices, which can enhance performance and clarity when processing data in a functional programming style.
 
-    -   apply:\
-    -   lapply:\
-    -   sapply:\
-
 ## Task6 - Basic visualization with R
 
 1.  Compare the distributions of the body heights of the two species from the'magic_guys.csv' dataset graphically 1-a
@@ -134,9 +130,9 @@ plot(plot_box)
 ```
 
 1-c\
-- **png**:\
-- **pdf**:\
-- **svg**:\
+- **png**:Data can be restored to its pre-compression state, resulting in high-quality images\
+- **pdf**:Documents containing high-quality images can be created efficiently.\
+- **svg**:Scalable and resizable as needed. It can be designed at any resolution, allowing images to be enlarged or reduced without losing quality or becoming pixelated.\
 2. Load the gene expression data matrix from the ‘microarray_data.tab’ dataset provided in the shared folder, it is a big tabular separated matrix.
 
 ```{r}
